@@ -1,10 +1,8 @@
 package configs
 
 import (
-	"io/ioutil"
 	"log"
 	"os"
-	"path/filepath"
 
 	"github.com/joho/godotenv"
 )
@@ -15,7 +13,7 @@ type Configs struct {
 
 type ElasticSearchConfig struct {
 	BaseURL string
-	CACert  []byte
+	Cert    string
 }
 
 func ReadConfigs() *Configs {
@@ -24,12 +22,16 @@ func ReadConfigs() *Configs {
 		log.Fatalf("Failed to read .env: %v", err)
 	}
 
-	absPath, _ := filepath.Abs("../http_ca.crt")
-	cert, _ := ioutil.ReadFile(absPath)
+	// absPath, _ := filepath.Abs("../http_ca.crt")
+	dir, err := os.Getwd()
+	if err != nil {
+		log.Fatal(err)
+	}
+	// fmt.Println(dir)
 
 	elasticSearchConfig := ElasticSearchConfig{
 		BaseURL: os.Getenv("ELASTIC_SEARCH.BASE_URL"),
-		CACert:  cert,
+		Cert:    dir + "/http_ca.crt",
 	}
 
 	return &Configs{

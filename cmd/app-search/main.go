@@ -1,10 +1,10 @@
 package main
 
 import (
+	"crypto/x509"
+	"io/ioutil"
 	"log"
-	"net/http"
 
-	"github.com/elastic/go-elasticsearch"
 	"github.com/linggaaskaedo/solid-go-elastic/configs"
 	"github.com/linggaaskaedo/solid-go-elastic/internal/search/handler"
 	"github.com/linggaaskaedo/solid-go-elastic/internal/search/repository"
@@ -18,21 +18,19 @@ var (
 )
 
 func main() {
-	cfg := elasticsearch.Config{
-		Addresses: clusterURLs,
-		Username:  username,
-		Password:  password,
-	}
-	es, err := elasticsearch.NewClient(cfg)
-	if err != nil {
-		log.Fatalf("Failed connect to elasticesearch-docker: %v", err)
-	}
-
 	// read a configs instance
 	configs := configs.ReadConfigs()
 
+	caCert, err := ioutil.ReadFile(configs.ElasticSearchConfigs.Cert)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	caCertPool := x509.NewCertPool()
+	caCertPool.AppendCertsFromPEM(caCert)
+
 	// construct a repository
-	repository := repository.NewElasticSearch(configs.ElasticSearchConfigs.BaseURL, configs.ElasticSearchConfigs.CACert)
+	repository := repository.NewElasticSearch(configs.ElasticSearchConfigs.BaseURL, caCertPool)
 
 	// do a health check
 	// if error abort operation immediately

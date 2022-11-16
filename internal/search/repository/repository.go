@@ -2,6 +2,8 @@ package repository
 
 import (
 	"bytes"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -25,15 +27,19 @@ type Repository interface {
 
 type ElasticSearch struct {
 	baseURL string
-	cert    []byte
+	cert    *x509.CertPool
 }
 
-func NewElasticSearch(baseURL string, cert []byte) *ElasticSearch {
+func NewElasticSearch(baseURL string, cert *x509.CertPool) *ElasticSearch {
 	return &ElasticSearch{baseURL, cert}
 }
 
 func (c *ElasticSearch) CheckHealth() error {
-	response, err := http.Get(c.baseURL)
+	httpClient := http.Client{
+		Transport: &http.Transport{TLSClientConfig: &tls.Config{RootCAs: c.cert}},
+	}
+
+	response, err := httpClient.Get(c.baseURL)
 	if err != nil {
 		return err
 	}
@@ -74,7 +80,9 @@ func (c *ElasticSearch) CreateIndex() error {
 		return fmt.Errorf("failed to make a create index request: %v", err)
 	}
 
-	httpClient := http.Client{}
+	httpClient := http.Client{
+		Transport: &http.Transport{TLSClientConfig: &tls.Config{RootCAs: c.cert}},
+	}
 	req.Header.Add("Content-type", "application/json")
 	response, err := httpClient.Do(req)
 	if err != nil {
@@ -99,7 +107,9 @@ func (c *ElasticSearch) InsertData(e *model.Employee) error {
 		return fmt.Errorf("failed to make a insert data request: %v", err)
 	}
 
-	httpClient := http.Client{}
+	httpClient := http.Client{
+		Transport: &http.Transport{TLSClientConfig: &tls.Config{RootCAs: c.cert}},
+	}
 	req.Header.Add("Content-type", "application/json")
 	response, err := httpClient.Do(req)
 	if err != nil {
@@ -141,7 +151,9 @@ func (c *ElasticSearch) UpdateData(e *model.Employee) error {
 		return fmt.Errorf("failed to make a update data request: %v", err)
 	}
 
-	httpClient := http.Client{}
+	httpClient := http.Client{
+		Transport: &http.Transport{TLSClientConfig: &tls.Config{RootCAs: c.cert}},
+	}
 	req.Header.Add("Content-type", "application/json")
 	response, err := httpClient.Do(req)
 	if err != nil {
@@ -163,7 +175,9 @@ func (c *ElasticSearch) DeleteData(id int) error {
 		return fmt.Errorf("failed to make a delete data request: %v", err)
 	}
 
-	httpClient := http.Client{}
+	httpClient := http.Client{
+		Transport: &http.Transport{TLSClientConfig: &tls.Config{RootCAs: c.cert}},
+	}
 	req.Header.Add("Content-type", "application/json")
 	response, err := httpClient.Do(req)
 	if err != nil {
@@ -197,7 +211,9 @@ func (c *ElasticSearch) SearchData(keyword string) ([]*model.Employee, error) {
 		return nil, fmt.Errorf("failed to make a search data request: %v", err)
 	}
 
-	httpClient := http.Client{}
+	httpClient := http.Client{
+		Transport: &http.Transport{TLSClientConfig: &tls.Config{RootCAs: c.cert}},
+	}
 	req.Header.Add("Content-type", "application/json")
 	response, err := httpClient.Do(req)
 	if err != nil {
